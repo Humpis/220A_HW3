@@ -13,14 +13,18 @@ smiley:
 	li $t0, 0x0000000f				# black bg white fg
 	li $t1, 0x000000b7				# yellow bg grey fg
 	li $t2, 0x00000017				# red bg white fg
-	li $t3, 1					# offset
+	li $t3, 0					# offset
 	li $t4, 0xffff0000				# base adress
+	li $t6, '\0'
 	
 smiley_loop:
-	beq $t3, 201, black_done			# offset out of bounds
+	beq $t3, 200, black_done			# offset out of bounds
+	add $t5, $t4, $t3				# t5 = base + offset
+	sb $t6, ($t5)					# store the charactor
+	addi $t3, $t3, 1				# offset++
 	add $t5, $t4, $t3				# t5 = base + offset
 	sb $t0, ($t5)					# store the color
-	addi $t3, $t3, 2				# add 2 to counter
+	addi $t3, $t3, 1				# offset++
 	j smiley_loop
 	
 black_done:

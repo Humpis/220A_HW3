@@ -125,6 +125,50 @@ clear_cellsArray:
 	j clear_cellsArray
 
 clear_done:
+	addi $t2, $t2, -100
+	li $t6, -1					# set q1 to -1
+	#li $t7, -1					# q2 to -1
+	li $t5, 0xffff0000				# base adress
+
+load_bombs:
+	
+	#a0 is file desc
+	la $a1, buffer					# input buffer
+	li $a2, 1					# num chars to read
+	li $v0, 14
+	syscall
+	lw $t0, ($a1)					# char read
+	beq $t0, ' ', load_bombs			# char is space
+	beq $t0, '\t', load_bombs			# char is space
+	beq $t0, '\r', load_bombs			# char is space
+	beq $t0, '\n', load_bombs			# char is space
+	blt $t0, 48, load_map_error			# char less than 0
+	bgt $t0, 57, load_map_error			# char gt 9
+	bne $t6, -1, secondq
+	move $t6, $t0					# put char in q1
+	j load_bombs
+
+secondq:
+	addi $t6, $t6, -48				# make q1 the number
+	addi $t0, $t0, -48				# same for q2
+	li $t7, 10					# for mult
+	mul $t6, $t6, $t7				# mult q1 for the thing
+	add $t0, $t6, $t0				# add coords together
+	#move $t6, $t2					# save a copy of cells array
+	#add $t6, $t6, $t0				# t6 = position in mem of the cell that has a bomb
+	
+	sll $t0, $t0, 1
+	add $t5, $t5, $t0
+	
+	
+	li $t1, 0x00000007				# black bg frey fg
+	li $t7, 'b'					# bomb char
+	sb $t7, ($t5)					# store bomb
+	addi $t5, $t5, 1				# color adress
+	sb $t1, ($t5)					# store color
+	li $t5, 0xffff0000
+	li $t6, -1					#reset q1
+	j load_bombs
 
 
 load_map_error:
@@ -194,4 +238,5 @@ cursor_row: .word -1
 cursor_col: .word -1
 
 #place any additional data declarations here
+buffer: .word 0
 

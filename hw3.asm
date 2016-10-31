@@ -131,7 +131,7 @@ clear_done:
 	li $t5, 0xffff0000				# base adress
 
 load_bombs:
-	
+	beqz $v0, load_bombs_done
 	#a0 is file desc
 	la $a1, buffer					# input buffer
 	li $a2, 1					# num chars to read
@@ -170,7 +170,10 @@ secondq:
 	li $t6, -1					#reset q1
 	j load_bombs
 
-
+load_bombs_done:
+	beq $t6, -1, load_map_error
+	j load_map_done						#idk about this
+	
 load_map_error:
 	li $v0, -1					# error
 	jr $ra

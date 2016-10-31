@@ -102,12 +102,38 @@ close_file:
   	jr $ra
 
 load_map:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -200
-    ###########################################
-    jr $ra
+	li $t0, 0					# to set row and col to default
+	sw $t0, cursor_row
+	sw $t0, cursor_col
+	li $t0, 0xffff0000				# base adress
+	li $t1, 0					# to set things to 0
+	move $t2, $a1					# put cells array in t2
+	li $t3, 0					# counter 
+	li $t4, 0xffff00c8				# when the screen is full
+	
+clear_map:
+	beq $t0, $t4, clear_cellsArray			# out of bounds
+	sb $t1, ($t0)					# store 0 in adress for map
+	addi $t0, $t0, 1				# inc to next adress
+	j clear_map
+
+clear_cellsArray:
+	beq $t3, 100, clear_done			# out of bounds
+	sb $t1, ($t2)					# store 0 for cells array
+	addi $t3, $t3, 1				# counter++
+	addi $t2, $t2, 1				# inc to next adress
+	j clear_cellsArray
+
+clear_done:
+
+
+load_map_error:
+	li $v0, -1					# error
+	jr $ra
+
+load_map_done:
+	li $v0, 0					# sucsess
+	jr $ra
 
 ##############################
 # PART 3 FUNCTIONS

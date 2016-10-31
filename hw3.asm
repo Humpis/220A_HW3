@@ -88,20 +88,18 @@ smiley_done:
 ##############################
 
 open_file:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -200
-    ###########################################
-    jr $ra
+	# a0 is already the file name
+	li $a1, 0					# read only
+	li $a2, 0					# ignore mode
+	li $v0, 13					# syscall for open file
+ 	syscall						# v0 contains file descriptor
+	jr $ra
 
 close_file:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -200
-    ###########################################
-    jr $ra
+	#a0 is already the file desc
+	li $v0, 16					# sycall to close
+	syscall
+  	jr $ra
 
 load_map:
     #Define your code here

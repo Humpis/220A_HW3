@@ -41,6 +41,14 @@ main:
 	move	$a0,	$s0
 	jal	close_file
 
+
+#exit:
+	li	$v0,	10
+	syscall
+####
+
+
+
 	# set the display to all covered and init the cursor
 	jal	init_display
 

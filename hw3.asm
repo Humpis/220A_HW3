@@ -110,10 +110,13 @@ load_map:
 	move $t2, $a1					# put cells array in t2
 	li $t3, 0					# counter 
 	li $t4, 0xffff00c8				# when the screen is full
+	li $t5, 0x00000077
 	
 clear_map:
 	beq $t0, $t4, clear_cellsArray			# out of bounds
-	sb $t1, ($t0)					# store 0 in adress for map
+	sb $t1, ($t0)					# store 0 char
+	addi $t0, $t0, 1				# inc
+	sb $t5, ($t0)					# store grey in adress for map
 	addi $t0, $t0, 1				# inc to next adress
 	j clear_map
 
@@ -131,12 +134,12 @@ clear_done:
 	li $t5, 0xffff0000				# base adress
 
 load_bombs:
-	beqz $v0, load_bombs_done
 	#a0 is file desc
 	la $a1, buffer					# input buffer
 	li $a2, 1					# num chars to read
 	li $v0, 14
 	syscall
+	beqz $v0, load_bombs_done
 	lw $t0, ($a1)					# char read
 	beq $t0, ' ', load_bombs			# char is space
 	beq $t0, '\t', load_bombs			# char is space
@@ -171,7 +174,7 @@ secondq:
 	j load_bombs
 
 load_bombs_done:
-	beq $t6, -1, load_map_error
+	bne $t6, -1, load_map_error
 	j load_map_done						#idk about this
 	
 load_map_error:

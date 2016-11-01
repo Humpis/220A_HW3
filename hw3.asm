@@ -190,8 +190,26 @@ load_map_done:
 ##############################
 
 init_display:
-    #Define your code here
-    jr $ra
+	li $t0, 0xffff0000				# base adress
+	li $t1, '\0'					# to set things to 0
+	li $t4, 0xffff00c8				# when the screen is full
+	li $t5, 0x00000077				# grey on grey
+	
+clear_display:
+	beq $t0, $t4, clear_display_done		# out of bounds
+	sb $t1, ($t0)					# store 0 char
+	addi $t0, $t0, 1				# inc
+	sb $t5, ($t0)					# store grey in adress for map
+	addi $t0, $t0, 1				# inc to next adress
+	j clear_display
+
+clear_display_done:
+	li $t5, 0xffff0001				# base adress
+	li $t0, 0x000000b7				# grey on yellow
+	sb $t0, ($t5)					# store cursor color
+	
+init_display_done:
+    	jr $ra
 
 set_cell:
     #Define your code here

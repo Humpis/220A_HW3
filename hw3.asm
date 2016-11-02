@@ -335,12 +335,35 @@ init_display:
     	jr $ra
 
 set_cell:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -200
-    ###########################################
-    jr $ra
+	lw $t0, ($sp)					# new bg color
+	bltz $a0, set_cell_error			# check row	
+	bge $a0, 10, set_cell_error
+	bltz $a1, set_cell_error			# check col
+	bge $a1, 10, set_cell_error
+	bltz $a3, set_cell_error			# check fg
+	bgt $a3, 15, set_cell_error
+	bltz $t0, set_cell_error			# check bg
+	bgt $t0, 15, set_cell_error
+	li $t1, 10					# for mult
+	mul $t1, $a0, $t1				# t1 = row * 10
+	add $t1, $t1, $a1				# t1 = row + col in mem
+	sll $t0, $t0, 4					# shift bg to where it should be
+	add $t0, $t0, $t3				# bg + fg
+	sll $t1, $t1, 1					# because mmio is 2 bytes per cell
+	li $t2, 0xffff0000				# base
+	add $t2, $t2, $t1				# base + offset
+	sb $a2, ($t2)					# store char
+	addi $t2, $t2, 1				# next byte
+	sb $t0, ($t2)					# store char
+	j set_cell_done
+	
+set_cell_error:
+	li $v0, -1					# error
+	jr $ra
+
+set_cell_done:
+	li $v0, 0					# sucess
+	jr $ra
 
 reveal_map:
     #Define your code here

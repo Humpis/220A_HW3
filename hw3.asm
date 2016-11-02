@@ -348,7 +348,7 @@ set_cell:
 	mul $t1, $a0, $t1				# t1 = row * 10
 	add $t1, $t1, $a1				# t1 = row + col in mem
 	sll $t0, $t0, 4					# shift bg to where it should be
-	add $t0, $t0, $t3				# bg + fg
+	add $t0, $t0, $a3				# bg + fg
 	sll $t1, $t1, 1					# because mmio is 2 bytes per cell
 	li $t2, 0xffff0000				# base
 	add $t2, $t2, $t1				# base + offset
@@ -366,8 +366,136 @@ set_cell_done:
 	jr $ra
 
 reveal_map:
-    #Define your code here
-    jr $ra
+	addi $sp, $sp, -16				# save
+	sw $ra, 0($sp)	
+	sw $s0, 4($sp)
+	sw $s1, 8($sp)
+	sw $s2, 12($sp)
+	
+	move $s0, $a1					# cell array
+    	beqz $a0, reveal_map_done			# game in progress
+    	beq $a0, 1, reveal_win
+ 	# else lost
+ 	li $s1, 0					# offset
+ 	li $s2, 0xffff0000				# base mmio
+ 	
+ reveal_map_loop:
+ 	beq $s1, 100, reveal_map_cursor
+    	add $t0, $s0, $s1				# cell array + offset 
+    	lb $t1, ($t0)					# data in cell
+    	li $t2, 8					# for mask
+    	and $t3, $t2, $t1				# bit 4(flag)
+    	bne $t3, $t2, no_flag				# bit 4 is 0, j		flag presentvvvvv
+    	li $t2, 16					# for mask
+    	and $t3, $t2, $t1				# bomb bit 5
+    	beq $t3, $t2, flag_correct			# correctly flagged bomb
+    	
+ flag_incorrect:
+ 	li $t0, 10					# for divide
+ 	div $s1, $t0					# offset/10
+ 	mflo $a0					# row
+ 	mfhi $a1					# col
+ 	li $a2, 'f'					# char
+ 	li $a3, 12					# fg
+ 	li $t0, 9					# bg
+ 	addi $sp, $sp, -4				# store bg
+ 	sw $t0, ($sp)
+ 	jal set_cell					# set cell
+ 	addi $sp, $sp, 4				# remove bg from stack
+ 	addi $s1, $s1, 1				# offset++
+ 	j reveal_map_loop
+ 
+ flag_correct:
+    	li $t0, 10					# for divide
+ 	div $s1, $t0					# offset/10
+ 	mflo $a0					# row
+ 	mfhi $a1					# col
+ 	li $a2, 'f'					# char
+ 	li $a3, 12					# fg
+ 	li $t0, 10					# bg
+ 	addi $sp, $sp, -4				# store bg
+ 	sw $t0, ($sp)
+ 	jal set_cell					# set cell
+ 	addi $sp, $sp, 4				# remove bg from stack
+ 	addi $s1, $s1, 1				# offset++
+ 	j reveal_map_loop
+    	
+  no_flag:
+  	li $t2, 16					# for mask
+    	and $t3, $t2, $t1				# bomb bit 5
+    	bne $t3, $t2, no_bomb				# no bomb found, j bombvvvvv
+    	li $t0, 10					# for divide
+ 	div $s1, $t0					# offset/10
+ 	mflo $a0					# row
+ 	mfhi $a1					# col
+ 	li $a2, 'b'					# char
+ 	li $a3, 7					# fg
+ 	li $t0, 0					# bg
+ 	addi $sp, $sp, -4				# store bg
+ 	sw $t0, ($sp)
+ 	jal set_cell					# set cell
+ 	addi $sp, $sp, 4				# remove bg from stack
+ 	addi $s1, $s1, 1				# offset++
+ 	j reveal_map_loop
+    	
+  no_bomb:
+    	li $t2, 7					# for mask
+    	and $t3, $t2, $t1				# number bits 0-3
+    	beqz $t3, no_number			# no number found, j nmum,nertvvvvv
+    	li $t0, 10					# for divide
+ 	div $s1, $t0					# offset/10
+ 	mflo $a0					# row
+ 	mfhi $a1					# col
+ 	addi $t3, $t3, 48				# asciio
+ 	move $a2, $t3					# char
+ 	li $a3, 13					# fg
+ 	li $t0, 0					# bg
+ 	addi $sp, $sp, -4				# store bg
+ 	sw $t0, ($sp)
+ 	jal set_cell					# set cell
+ 	addi $sp, $sp, 4				# remove bg from stack
+ 	addi $s1, $s1, 1				# offset++
+ 	j reveal_map_loop
+ 	
+  no_number:
+  	li $t0, 10					# for divide
+ 	div $s1, $t0					# offset/10
+ 	mflo $a0					# row
+ 	mfhi $a1					# col
+ 	li $a2, '\0'					# char
+ 	li $a3, 15					# fg
+ 	li $t0, 0					# bg
+ 	addi $sp, $sp, -4				# store bg
+ 	sw $t0, ($sp)
+ 	jal set_cell					# set cell
+ 	addi $sp, $sp, 4				# remove bg from stack
+ 	addi $s1, $s1, 1				# offset++
+ 	j reveal_map_loop
+    	
+  reveal_map_cursor:
+  	lw $a0, cursor_row
+  	lw $a1, cursor_col 
+ 	li $a2, 'e'					# char
+ 	li $a3, 15					# fg
+ 	li $t0, 9					# bg
+ 	addi $sp, $sp, -4				# store bg
+ 	sw $t0, ($sp)
+ 	jal set_cell					# set cell
+ 	addi $sp, $sp, 4				# remove bg from stack
+  	j reveal_map_done
+    	
+reveal_win:
+	jal smiley
+	j reveal_map_done
+    	
+reveal_map_done:
+	lw $ra, 0($sp)	
+	lw $s0, 4($sp)
+	lw $s1, 8($sp)
+	lw $s2, 12($sp)
+	lw $s3, 16($sp)
+	addi $sp, $sp, 20				# load
+    	jr $ra
 
 
 ##############################

@@ -48,7 +48,10 @@ main:
 
 	# set the display to all covered and init the cursor
 	jal	init_display
-
+#########i addded this
+	li $a0, -1
+	la $a1, cells_array
+	jal reveal_map
 
 #exit:
 	li	$v0,	10

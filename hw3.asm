@@ -105,20 +105,9 @@ load_map:
 	li $t0, 0					# to set row and col to default
 	sw $t0, cursor_row
 	sw $t0, cursor_col
-	li $t0, 0xffff0000				# base adress
 	li $t1, 0					# to set things to 0
 	move $t2, $a1					# put cells array in t2
 	li $t3, 0					# counter 
-	li $t4, 0xffff00c8				# when the screen is full
-	li $t5, 0x00000077
-	
-clear_map:
-	beq $t0, $t4, clear_cellsArray			# out of bounds
-	sb $t1, ($t0)					# store 0 char
-	addi $t0, $t0, 1				# inc
-	sb $t5, ($t0)					# store grey in adress for map
-	addi $t0, $t0, 1				# inc to next adress
-	j clear_map
 
 clear_cellsArray:
 	beq $t3, 100, clear_done			# out of bounds
@@ -128,10 +117,8 @@ clear_cellsArray:
 	j clear_cellsArray
 
 clear_done:
-	addi $t2, $t2, -100
+	addi $t2, $t2, -100				# reset to beggining of cells array
 	li $t6, -1					# set q1 to -1
-	#li $t7, -1					# q2 to -1
-	li $t5, 0xffff0000				# base adress
 
 load_bombs:
 	#a0 is file desc
@@ -157,25 +144,17 @@ secondq:
 	li $t7, 10					# for mult
 	mul $t6, $t6, $t7				# mult q1 for the thing
 	add $t0, $t6, $t0				# add coords together
-	#move $t6, $t2					# save a copy of cells array
-	#add $t6, $t6, $t0				# t6 = position in mem of the cell that has a bomb
-	
-	sll $t0, $t0, 1
-	add $t5, $t5, $t0
-	
-	
-	li $t1, 0x00000007				# black bg frey fg
-	li $t7, 'b'					# bomb char
-	sb $t7, ($t5)					# store bomb
-	addi $t5, $t5, 1				# color adress
-	sb $t1, ($t5)					# store color
-	li $t5, 0xffff0000
+	move $t6, $t2					# save a copy of cells array!!!!!
+	add $t6, $t6, $t0				# t6 = position in mem of the cell that has a bomb
+	li $t5, 16
+	sb $t5, ($t6)	
+
 	li $t6, -1					#reset q1
 	j load_bombs
 
 load_bombs_done:
-	bne $t6, -1, load_map_error
-	j load_map_done						#idk about this
+	bne $t6, -1, load_map_error			# uneven nummber of numbers
+	j load_map_done					
 	
 load_map_error:
 	li $v0, -1					# error

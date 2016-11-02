@@ -156,9 +156,148 @@ load_map:
 	bne $t6, -1, load_map_error			# uneven nummber of numbers
 	
   load_map_numbers:
+	move $t0, $t2					# base adress of cells array
+	li $t1, 0					# offset
 
-
-
+  load_map_number_loop:
+  	beq $t1, 100, load_map_number_loop_done		# offset out of bounds
+  	li $t4, 0					# number of bombs adj
+  	li $t2, 10					# for mod
+  	div $t1, $t2					# hi = offset mod 10
+  	mfhi $t2					# t2 = hi
+  	beqz $t2, load_map_left				# left edge
+  	beq $t2, 9, load_map_right			# right edge
+  		
+    load_map_top_row:
+    	addi $t2, $t1, -11				# top left corner w/r to offset
+  	add $t2, $t2, $t0				# ^^ but in mem 
+  	addi $t2, $t2, 2				# temp for jump to middle
+    	blt $t1, 10, load_map_middle_row		# top edge
+    	addi $t2, $t2, -2				# undotemp for jump to middle
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_top_row2			# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_top_row2:
+  	addi $t2, $t2, 1				# mem of next pos
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_top_row3			# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_top_row3:
+    	addi $t2, $t2, 1				# mem of next pos
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_middle_row		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_middle_row:
+  	addi $t2, $t2, 10				# mem of next pos(000,0o*,000)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_middle_row2		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_middle_row2:
+  	addi $t2, $t2, -2				# mem of next pos(000,*o0,000)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_bottom_row		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_bottom_row:
+    	bgt $t1, 89, load_map_norm_done			# offset is bottom row
+  	addi $t2, $t2, 10				# mem of next pos(000,0o0,*00)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_bottom_row2		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++	
+    load_map_bottom_row2:
+  	addi $t2, $t2, 1				# mem of next pos
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_bottom_row3		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_bottom_row3:
+  	addi $t2, $t2, 1				# mem of next pos
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_norm_done			# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+     load_map_norm_done:
+  	add $t2, $t1, $t0				# store bombs adj. mem of cell
+  	lb $t3, ($t2)					# number in mem
+  	add $t3, $t3, $t4				# t3 = num in mem of cell + bombs adj
+  	sb $t3, ($t2)					# store bombs adj + orig num in cell
+  	addi $t1, $t1, 1				# offset++
+  	j load_map_number_loop
+  
+  load_map_left:	
+  	addi $t2, $t1, -10				# top left corner w/r to offset
+  	add $t2, $t2, $t0				# ^^ but in mem 
+  	addi $t2, $t2, 1				# temp for jump to middle
+  	blt $t1, 10, load_map_left_middle_row		# top edge
+  	addi $t2, $t2, -1				# undo temp for jump to middle
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_left_top_row3		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_left_top_row3:
+    	addi $t2, $t2, 1				# mem of next pos
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_left_middle_row		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_left_middle_row:
+  	addi $t2, $t2, 10				# mem of next pos(00,o*,00)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_left_bottom_row		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_left_bottom_row:
+    	bgt $t1, 89, load_map_left_done			# offset is bottom row
+  	addi $t2, $t2, 10				# mem of next pos(00,o0,0*)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_left_bottom_row2		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++	
+    load_map_left_bottom_row2:
+  	addi $t2, $t2, -1				# mem of next pos(00,o0,*0)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_left_done			# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+     load_map_left_done:
+  	add $t2, $t1, $t0				# store bombs adj. mem of cell
+  	lb $t3, ($t2)					# number in mem
+  	add $t3, $t3, $t4				# t3 = num in mem of cell + bombs adj
+  	sb $t3, ($t2)					# store bombs adj + orig num in cell
+  	addi $t1, $t1, 1				# offset++
+  	j load_map_number_loop
+  
+  load_map_right:
+  	addi $t2, $t1, -11				# top left corner w/r to offset
+  	add $t2, $t2, $t0				# ^^ but in mem 
+  	addi $t2, $t2, 1				# temp for jump to middle
+  	blt $t1, 10, load_map_right_middle_row		# top edge
+  	addi $t2, $t2, -1				# undo temp for jump to middle
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_right_top_row3		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_right_top_row3:
+    	addi $t2, $t2, 1				# mem of next pos
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_right_middle_row		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_right_middle_row:
+  	addi $t2, $t2, 9				# mem of next pos(00,*o,00)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_right_bottom_row		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+    load_map_right_bottom_row:
+    	bgt $t1, 89, load_map_right_done			# offset is bottom row
+  	addi $t2, $t2, 10				# mem of next pos(00,o0,*0)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_right_bottom_row2		# no bomb
+  	addi $t4, $t4, 1				# bombs adj++	
+    load_map_right_bottom_row2:
+  	addi $t2, $t2, 1				# mem of next pos(00,o0,0*)
+  	lb $t3, ($t2)					# number in mem
+  	blt $t3, 16, load_map_right_done			# no bomb
+  	addi $t4, $t4, 1				# bombs adj++
+     load_map_right_done:
+  	add $t2, $t1, $t0				# store bombs adj. mem of cell
+  	lb $t3, ($t2)					# number in mem
+  	add $t3, $t3, $t4				# t3 = num in mem of cell + bombs adj
+  	sb $t3, ($t2)					# store bombs adj + orig num in cell
+  	addi $t1, $t1, 1				# offset++
+  	j load_map_number_loop
+  
+    load_map_number_loop_done:
 	j load_map_done					
 	
   load_map_error:

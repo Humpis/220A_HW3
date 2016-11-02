@@ -17,7 +17,7 @@ smiley:
 	li $t4, 0xffff0000				# base adress
 	li $t6, '\0'
 	
-smiley_loop:
+  smiley_loop:
 	beq $t3, 200, black_done			# offset out of bounds
 	add $t5, $t4, $t3				# t5 = base + offset
 	sb $t6, ($t5)					# store the charactor
@@ -27,7 +27,7 @@ smiley_loop:
 	addi $t3, $t3, 1				# offset++
 	j smiley_loop
 	
-black_done:
+  black_done:
 	addi $t5, $t4, 46				# eyes adress
 	li $t6, 'b'					# bomb char
 	sb $t6, ($t5)					# store bomb
@@ -80,7 +80,7 @@ black_done:
 	addi $t5, $t5, 1				# color adress
 	sb $t2, ($t5)					# store color
 	
-smiley_done:
+  smiley_done:
 	jr $ra
 
 ##############################
@@ -109,18 +109,18 @@ load_map:
 	move $t2, $a1					# put cells array in t2
 	li $t3, 0					# counter 
 
-clear_cellsArray:
+  clear_cellsArray:
 	beq $t3, 100, clear_done			# out of bounds
 	sb $t1, ($t2)					# store 0 for cells array
 	addi $t3, $t3, 1				# counter++
 	addi $t2, $t2, 1				# inc to next adress
 	j clear_cellsArray
 
-clear_done:
+  clear_done:
 	addi $t2, $t2, -100				# reset to beggining of cells array
 	li $t6, -1					# set q1 to -1
 
-load_bombs:
+  load_bombs:
 	#a0 is file desc
 	la $a1, buffer					# input buffer
 	li $a2, 1					# num chars to read
@@ -138,7 +138,7 @@ load_bombs:
 	move $t6, $t0					# put char in q1
 	j load_bombs
 
-secondq:
+  secondq:
 	addi $t6, $t6, -48				# make q1 the number
 	addi $t0, $t0, -48				# same for q2
 	li $t7, 10					# for mult
@@ -152,15 +152,20 @@ secondq:
 	li $t6, -1					#reset q1
 	j load_bombs
 
-load_bombs_done:
+  load_bombs_done:
 	bne $t6, -1, load_map_error			# uneven nummber of numbers
+	
+  load_map_numbers:
+
+
+
 	j load_map_done					
 	
-load_map_error:
+  load_map_error:
 	li $v0, -1					# error
 	jr $ra
 
-load_map_done:
+  load_map_done:
 	li $v0, 0					# sucsess
 	jr $ra
 
@@ -174,7 +179,7 @@ init_display:
 	li $t4, 0xffff00c8				# when the screen is full
 	li $t5, 0x00000077				# grey on grey
 	
-clear_display:
+  clear_display:
 	beq $t0, $t4, clear_display_done		# out of bounds
 	sb $t1, ($t0)					# store 0 char
 	addi $t0, $t0, 1				# inc
@@ -182,12 +187,12 @@ clear_display:
 	addi $t0, $t0, 1				# inc to next adress
 	j clear_display
 
-clear_display_done:
+  clear_display_done:
 	li $t5, 0xffff0001				# base adress
 	li $t0, 0x000000b7				# grey on yellow
 	sb $t0, ($t5)					# store cursor color
 	
-init_display_done:
+  init_display_done:
     	jr $ra
 
 set_cell:

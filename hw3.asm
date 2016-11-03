@@ -503,13 +503,104 @@ reveal_map_done:
 ##############################
 
 perform_action:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -200
-    ##########################################
-    jr $ra
+	addi $sp, $sp, -4				# save
+	sw $ra, 0($sp)	
+  	lw $t0, cursor_row
+  	lw $t1, cursor_col
+  	beq $a1, 'f', perform_flag
+  	beq $a1, 'F', perform_flag
+  	beq $a1, 'r', perform_reveal
+  	beq $a1, 'R', perform_reveal
+  	beq $a1, 'w', perform_up
+  	beq $a1, 'W', perform_up
+  	beq $a1, 'a', perform_left
+  	beq $a1, 'A', perform_left
+  	beq $a1, 's', perform_down
+  	beq $a1, 'S', perform_down
+  	beq $a1, 'd', perform_right
+  	beq $a1, 'D', perform_right
+  	j perform_action_error
+  	
+  perform_flag:
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	bge $t3, 64, perform_action_error		# cell already revealed
+  	li $t2, 8					# for mask
+  	and $t4, $t2, $t3				# cell and 8. flag bit
+  	beq $t4, $t2, perform_flag_remove		# flag there, remove
+  	addi $t3, $t3, 8				# put flag
+  	sb $t3, ($t2)					# store it back
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	li $t6, 'f'					# flag to be stores
+  	sb $t6, ($t5)					# add flag visual
+  	addi $t5, $t5, 1				# next mem adress
+  	li $t6, 0x0000007c				# bright blue on grey
+  	sb $t6, ($t5)					# add bg visual
+  	j perform_action_done
+  	
+  perform_flag_remove:
+  	addi $t3, $t3, -8				# remove flag
+  	sb $t3, ($t2)					# store it back
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	li $t6, '\0'					# blank to be stores
+  	sb $t6, ($t5)					# remove flag visual
+  	addi $t5, $t5, 1				# next mem adress
+  	li $t6, 0x00000077				# grey on grey
+  	sb $t6, ($t5)					# add bg visual
+  	j perform_action_done
+  	
+  perform_reveal:
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	bge $t3, 64, perform_action_error		# cell already revealed
+  	li $t2, 8					# for mask
+  	and $t4, $t2, $t3				# cell and 8. flag bit
+  	bne $t4, $t2, perform_reveal_noflag		# no flag. if flagVVVVV
+  	addi $t3, $t3, -8				# remove flag
+  	sb $t3, ($t2)					# store it back
+  perform_reveal_noflag:
+  	addi $t3, $t3, 64				# revealed!!!!!!
+  	sb $t3, ($t2)					# store it back
+  	li $t2, 7					# for mask
+  	and $t4, $t2, $t3				# cell and 8. flag bit
+  	beqz $t4, perform_reveal_empty			#  empty cell
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	#li $t6, '\0'					# blank to be stores
+  	sb $t4, ($t5)					# store char
+  	addi $t5, $t5, 1				# next mem adress
+  	li $t6, 0x00000000d				# bright magenta on black
+  	sb $t6, ($t5)					# add bg visual
+  	j perform_action_done
+  	
+  perform_reveal_empty:
+  	######search cell. idkkkkkkk
+  	
+  	j perform_action_done
+  	
+  perform_action_error:
+	sw $ra, 0($sp)	
+	addi $sp, $sp, 4				# load
+  	li $v0, -1
+  	jr $ra
 
+ perform_action_done:
+ 	sw $ra, 0($sp)	
+	addi $sp, $sp, 4				# load
+  	li $v0, 0
+  	jr $ra
+  	
 game_status:
     #Define your code here
     ############################################

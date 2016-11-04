@@ -523,12 +523,12 @@ perform_action:
   	beq $a1, 'R', perform_reveal
   	beq $a1, 'w', perform_up
   	beq $a1, 'W', perform_up
-  	#beq $a1, 'a', perform_left
-  	#beq $a1, 'A', perform_left
+  	beq $a1, 'a', perform_left
+  	beq $a1, 'A', perform_left
   	beq $a1, 's', perform_down
   	beq $a1, 'S', perform_down
-  	#beq $a1, 'd', perform_right
-  	#beq $a1, 'D', perform_right
+  	beq $a1, 'd', perform_right
+  	beq $a1, 'D', perform_right
   	j perform_action_error
   	
   perform_flag:
@@ -762,6 +762,190 @@ perform_action:
   	lw $t1, cursor_col
   	addi $t0, $t0, 1				# row++
   	sw $t0, cursor_row
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 11					# yellow bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack	
+  	j perform_action_done
+  	
+  perform_left:
+  	beqz $t1,  perform_action_error			# col = 0, cant move down
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	bge $t3, 64, perform_left_revealed	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 7					# grey bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack
+  	
+  	lw $t0, cursor_row
+  	lw $t1, cursor_col
+  	addi $t1, $t1, -1				# col--
+  	sw $t1, cursor_col
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 11					# yellow bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack
+  	
+  	j perform_action_done
+  	
+  perform_left_revealed:	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 0					# black bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack
+  	
+  	lw $t0, cursor_row
+  	lw $t1, cursor_col
+  	addi $t1, $t1, -1				# col--
+  	sw $t1, cursor_col
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 11					# yellow bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack	
+  	j perform_action_done
+  	
+  perform_right:
+  	beq $t1, 9 perform_action_error			# col = 9, cant move down
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	bge $t3, 64, perform_right_revealed	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 7					# grey bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack
+  	
+  	lw $t0, cursor_row
+  	lw $t1, cursor_col
+  	addi $t1, $t1, 1				# col++
+  	sw $t1, cursor_col
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 11					# yellow bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack
+  	
+  	j perform_action_done
+  	
+  perform_right_revealed:	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio	
+  	lb $a2, ($t5)					# charactor
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)					# mimmo stuff
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $a3, $t6, $t7				# fg
+  	li $t7, 0					# black bg
+  	addi $sp, $sp, -4				# store bg
+ 	sw $t7, ($sp)
+ 	move $a0, $t0					# row
+ 	move $a1, $t1					# col
+ 	jal set_cell					# set cell
+	addi $sp, $sp, 4				# remove bg from stack
+  	
+  	lw $t0, cursor_row
+  	lw $t1, cursor_col
+  	addi $t1, $t1, 1				# col++
+  	sw $t1, cursor_col
   	li $t2, 10					# for mult
   	mul $t2, $t0, $t2				# row*10
   	add $t5, $t2, $t1				# row + col

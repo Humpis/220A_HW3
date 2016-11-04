@@ -724,7 +724,7 @@ perform_action:
   	jr $ra
 
  perform_action_done:
- 	sw $ra, 0($sp)	
+ 	lw $ra, 0($sp)	
 	addi $sp, $sp, 4				# load
   	li $v0, 0
   	jr $ra

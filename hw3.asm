@@ -507,12 +507,9 @@ perform_action:
 	sw $ra, 0($sp)	
 	
 
- 	#addi $sp, $sp, -4				# store bg
- 	#li $t0, -1					# cuz i need to call this gay function and it not do anything
- 	#sw $t0, ($sp)
- 	#jal set_cell					# set cell
-	#addi $sp, $sp, 4				# remove bg from stack
- 	##addi $s1, $s1, 1				# offset++
+	li $a3, -1
+ 	jal set_cell					# gayyyyyy
+
 	
 	
   	lw $t0, cursor_row
@@ -968,7 +965,7 @@ perform_action:
   	j perform_action_done
   	
   perform_action_error:
-	sw $ra, 0($sp)	
+	lw $ra, 0($sp)	
 	addi $sp, $sp, 4				# load
   	li $v0, -1
   	jr $ra

@@ -505,6 +505,16 @@ reveal_map_done:
 perform_action:
 	addi $sp, $sp, -4				# save
 	sw $ra, 0($sp)	
+	
+
+ 	#addi $sp, $sp, -4				# store bg
+ 	#li $t0, -1					# cuz i need to call this gay function and it not do anything
+ 	#sw $t0, ($sp)
+ 	#jal set_cell					# set cell
+	#addi $sp, $sp, 4				# remove bg from stack
+ 	##addi $s1, $s1, 1				# offset++
+	
+	
   	lw $t0, cursor_row
   	lw $t1, cursor_col
   	beq $a1, 'f', perform_flag
@@ -513,12 +523,12 @@ perform_action:
   	beq $a1, 'R', perform_reveal
   	beq $a1, 'w', perform_up
   	beq $a1, 'W', perform_up
-  	beq $a1, 'a', perform_left
-  	beq $a1, 'A', perform_left
+  	#beq $a1, 'a', perform_left
+  	#beq $a1, 'A', perform_left
   	beq $a1, 's', perform_down
   	beq $a1, 'S', perform_down
-  	beq $a1, 'd', perform_right
-  	beq $a1, 'D', perform_right
+  	#beq $a1, 'd', perform_right
+  	#beq $a1, 'D', perform_right
   	j perform_action_error
   	
   perform_flag:
@@ -528,9 +538,9 @@ perform_action:
   	add $t2, $t5, $a0				# location in mem
   	lb $t3, ($t2)					# stuf in cell
   	bge $t3, 64, perform_action_error		# cell already revealed
-  	li $t2, 8					# for mask
-  	and $t4, $t2, $t3				# cell and 8. flag bit
-  	beq $t4, $t2, perform_flag_remove		# flag there, remove
+  	li $t7, 8					# for mask
+  	and $t4, $t7, $t3				# cell and 8. flag bit
+  	beq $t4, $t7, perform_flag_remove		# flag there, remove
   	addi $t3, $t3, 8				# put flag
   	sb $t3, ($t2)					# store it back
   	sll $t5, $t5, 1					# because mmio is 2 bytes
@@ -563,9 +573,9 @@ perform_action:
   	add $t2, $t5, $a0				# location in mem
   	lb $t3, ($t2)					# stuf in cell
   	bge $t3, 64, perform_action_error		# cell already revealed
-  	li $t2, 8					# for mask
-  	and $t4, $t2, $t3				# cell and 8. flag bit
-  	bne $t4, $t2, perform_reveal_noflag		# no flag. if flagVVVVV
+  	li $t7, 8					# for mask
+  	and $t4, $t7, $t3				# cell and 8. flag bit
+  	bne $t4, $t7, perform_reveal_noflag		# no flag. if flagVVVVV
   	addi $t3, $t3, -8				# remove flag
   	sb $t3, ($t2)					# store it back
   perform_reveal_noflag:
@@ -586,8 +596,126 @@ perform_action:
   	
   perform_reveal_empty:
   	######search cell. idkkkkkkk
-  	
+  	jal search_cells
   	j perform_action_done
+  	
+  perform_up:
+  	beqz $t0, perform_action_error			# row = 0, cant move up
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	bge $t3, 64, perform_up_revealed	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	li $t6, 0x000000077				# grey on grey
+  	sb $t6, ($t5)					# add bg visual
+  	addi $t0, $t0, -1				# row--
+  	sw $t0, cursor_row				# store new row
+  	
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $t6, $t6, $t7				# fg
+  	addi $t6, $t6, 27				# add yelow bg
+  	sb $t6, ($t5)					# store back
+  	j perform_action_done
+  	
+  perform_up_revealed:	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $t6, $t6, $t7				# fg
+  	addi $t6, $t6, 0				# add black bg
+  	sb $t6, ($t5)					# store back
+  	
+  	addi $t0, $t0, -1				# row--
+  	sw $t0, cursor_row				# store new row
+  	
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $t6, $t6, $t7				# fg
+  	addi $t6, $t6, 27				# add yelow bg
+  	sb $t6, ($t5)					# store back
+  	j perform_action_done
+  	
+    perform_down:
+  	beq $t0, 9 perform_action_error			# row = 9, cant move down
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	bge $t3, 64, perform_up_revealed	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	li $t6, 0x000000077				# grey on grey
+  	sb $t6, ($t5)					# add bg visual
+  	addi $t0, $t0, 1				# row++
+  	sw $t0, cursor_row				# store new row
+  	
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $t6, $t6, $t7				# fg
+  	addi $t6, $t6, 27				# add yelow bg
+  	sb $t6, ($t5)					# store back
+  	j perform_action_done
+  	
+  perform_down_revealed:	
+  	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $t6, $t6, $t7				# fg
+  	addi $t6, $t6, 0				# add black bg
+  	sb $t6, ($t5)					# store back
+  	
+  	addi $t0, $t0, 1				# row++
+  	sw $t0, cursor_row				# store new row
+  	
+  	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+	sll $t5, $t5, 1					# because mmio is 2 bytes
+  	li $t6, 0xffff0000
+  	add $t5, $t6, $t5				# loaction in mmio
+  	addi $t5, $t5, 1				# next mem adress
+  	lb $t6, ($t5)
+  	li $t7, 0x0000000f				# mask to get fg
+  	and $t6, $t6, $t7				# fg
+  	addi $t6, $t6, 27				# add yelow bg
+  	sb $t6, ($t5)					# store back
+  	j perform_action_done	
   	
   perform_action_error:
 	sw $ra, 0($sp)	
@@ -605,7 +733,8 @@ game_status:
     #Define your code here
     ############################################
     # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    li $v0, -200
+    #li $v0, -200
+    li $v0, 0
     ##########################################
     jr $ra
 

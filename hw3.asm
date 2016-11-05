@@ -978,13 +978,43 @@ perform_action:
   	jr $ra
   	
 game_status:
-    #Define your code here
-    ############################################
-    # DELETE THIS CODE. Only here to allow main program to run without fully implementing the function
-    #li $v0, -200
-    li $v0, 0
-    ##########################################
-    jr $ra
+	lw $t0, cursor_row
+	lw $t1, cursor_col
+	li $t2, 10					# for mult
+  	mul $t2, $t0, $t2				# row*10
+  	add $t5, $t2, $t1				# row + col
+  	add $t2, $t5, $a0				# location in mem
+  	lb $t3, ($t2)					# stuf in cell
+  	li $t5, 0					# counter for checkwin
+  	blt $t3, 64, game_status_checkwin
+  	li $t7, 16					# mask to get bomb
+  	and $t4, $t3, $t7				# bomb
+  	beq $t7, $t4, game_status_loose
+  		
+  game_status_checkwin:	
+  	beq $t5, 100, game_status_win
+  	add $t0, $t5, $a0				# position in cells array
+  	lb $t1, ($t0)					# stuff in cell
+  	li $t7, 16					# mask to get bomb
+  	and $t2, $t1, $t7				# bomb
+  	li $t7, 8					# mask to get flag
+  	and $t3, $t1, $t7				# flag
+  	sll $t3, $t3, 1					# shift flag to bomb bit
+  	bne $t3, $t2, game_status_inprogress
+  	addi $t5, $t5, 1				# inc counter
+  	j game_status_checkwin
+  	
+  game_status_inprogress:
+  	li $v0, 0
+    	jr $ra
+    	
+  game_status_win:
+  	li $v0, 1
+    	jr $ra
+    	
+  game_status_loose:
+  	li $v0, -1
+    	jr $ra
 
 ##############################
 # PART 5 FUNCTIONS

@@ -585,6 +585,7 @@ perform_action:
   	li $t6, 0xffff0000
   	add $t5, $t6, $t5				# loaction in mmio
   	#li $t6, '\0'					# blank to be stores
+  	addi $t4, $t4, 48				# num to char
   	sb $t4, ($t5)					# store char
   	addi $t5, $t5, 1				# next mem adress
   	li $t6, 0x00000000d				# bright magenta on black

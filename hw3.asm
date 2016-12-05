@@ -12,7 +12,7 @@
 smiley:
 	li $t0, 0x0000000f				# black bg white fg
 	li $t1, 0x000000b7				# yellow bg grey fg
-	li $t2, 0x00000017				# red bg white fg
+	li $t2, 0x0000001f				# red bg white fg
 	li $t3, 0					# offset
 	li $t4, 0xffff0000				# base adress
 	li $t6, '\0'
